@@ -64,9 +64,12 @@ module Linguist
     # Returns a Hash of language names and Integer size values.
     def languages
       @sizes ||= begin
-        sizes = Hash.new { 0 }
-        cache.each do |_, (language, size)|
-          sizes[language] += size
+        sizes = Hash.new do |h, k|
+          h[k] = { size: 0, loc: 0 }
+        end
+        cache.each do |_, (language, size, loc)|
+          sizes[language][:size] += size
+          sizes[language][:loc] += loc
         end
         sizes
       end
@@ -162,7 +165,7 @@ module Linguist
           blob = Linguist::LazyBlob.new(repository, delta.new_file[:oid], new, mode.to_s(8))
 
           if blob.include_in_language_stats?
-            file_map[new] = [blob.language.group.name, blob.size]
+            file_map[new] = [blob.language.group.name, blob.size, blob.loc]
           end
 
           blob.cleanup!
